@@ -46,7 +46,7 @@ cd roleradar
 ./start.sh          # Windows: start.bat
 ```
 
-Open <http://127.0.0.1:8765/docs> to try the API. Create your profile by
+Open <http://127.0.0.1:8787/docs> to try the API. Create your profile by
 copying `profiles/example/` to `profiles/<your-name>/` and editing it (see
 [`profiles/README.md`](profiles/README.md)).
 

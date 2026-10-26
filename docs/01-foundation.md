@@ -10,7 +10,7 @@ into what is here.
 flowchart LR
     EXT[Chrome extension<br/><i>stage 4</i>] -- POST jobs --> API
     DASH[Dashboard<br/><i>stage 6</i>] -- GET status --> API
-    API[FastAPI server<br/>localhost:8765] <--> DB[(SQLite<br/>data/roleradar.db)]
+    API[FastAPI server<br/>localhost:8787] <--> DB[(SQLite<br/>data/roleradar.db)]
     API -- reads --> PROF[profiles/&lt;name&gt;/]
     API -- starts --> FILTER[Rule filter<br/><i>stage 2</i>] --> RANK[Local LLM ranker<br/><i>stage 3</i>] --> BUILD[CV writer<br/><i>stage 5</i>]
 ```
@@ -107,7 +107,7 @@ German job titles almost always carry a gender marker (`m/w/d`, `f/m/x`,
 
 ## 4. The API (`roleradar/api/`)
 
-Start the server and open <http://127.0.0.1:8765/docs>: FastAPI builds that
+Start the server and open <http://127.0.0.1:8787/docs>: FastAPI builds that
 page from the code, and every endpoint can be tried from it.
 
 | Endpoint | What it does |
@@ -163,7 +163,7 @@ cd roleradar
 .\start.bat                        # first run installs packages, then starts
 ```
 
-Then open <http://127.0.0.1:8765/docs> and, using the `example` profile:
+Then open <http://127.0.0.1:8787/docs> and, using the `example` profile:
 
 1. `POST /api/profiles/example/searches` with
    `{"label": "AI Berlin", "url": "https://www.linkedin.com/jobs/search/?keywords=ai%20engineer&location=Berlin"}`.

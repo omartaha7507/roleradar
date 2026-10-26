@@ -19,7 +19,7 @@ class Settings:
     profiles_dir: Path
     # 127.0.0.1 means "this computer only": nobody else on your Wi-Fi can reach it.
     host: str = "127.0.0.1"
-    port: int = 8765
+    port: int = 8787
 
     @property
     def db_path(self) -> Path:
@@ -31,5 +31,5 @@ def load_settings() -> Settings:
         data_dir=Path(os.environ.get("ROLERADAR_DATA_DIR", PROJECT_ROOT / "data")),
         profiles_dir=Path(os.environ.get("ROLERADAR_PROFILES_DIR", PROJECT_ROOT / "profiles")),
         host=os.environ.get("ROLERADAR_HOST", "127.0.0.1"),
-        port=int(os.environ.get("ROLERADAR_PORT", "8765")),
+        port=int(os.environ.get("ROLERADAR_PORT", "8787")),
     )
