@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, HTTPException, Query
 
@@ -62,10 +62,11 @@ def jobs(
     conn: Conn,
     status: JobStatus | None = None,
     q: Annotated[str | None, Query(max_length=100, description="Search title or company")] = None,
+    sort: Annotated[Literal["newest", "score"], Query(description="newest first, or best score first")] = "newest",
     limit: Annotated[int, Query(ge=1, le=200)] = 50,
     offset: Annotated[int, Query(ge=0)] = 0,
 ) -> dict:
-    items, total = store.list_jobs(conn, profile.name, status=status, search=q, limit=limit, offset=offset)
+    items, total = store.list_jobs(conn, profile.name, status=status, search=q, sort=sort, limit=limit, offset=offset)
     return {"total": total, "items": items}
 
 

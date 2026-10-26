@@ -95,6 +95,21 @@ MIGRATIONS: list[str] = [
     ALTER TABLE jobs ADD COLUMN filter_result TEXT;   -- JSON: decision, reasons, notes
     ALTER TABLE jobs ADD COLUMN filtered_at   TEXT;
     """,
+    # --- version 3: stage 3, AI ranker ----------------------------------------------------
+    """
+    ALTER TABLE jobs ADD COLUMN rank_score  INTEGER;
+    ALTER TABLE jobs ADD COLUMN rank_result TEXT;     -- JSON: the model's judgement + score parts
+    ALTER TABLE jobs ADD COLUMN ranked_at   TEXT;
+    CREATE INDEX jobs_by_score ON jobs (profile, status, rank_score);
+
+    -- The model's answers, so the same job is never asked twice.
+    CREATE TABLE rank_cache (
+        key         TEXT PRIMARY KEY,
+        model       TEXT NOT NULL,
+        result      TEXT NOT NULL,
+        created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    """,
 ]
 
 

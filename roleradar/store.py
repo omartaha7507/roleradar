@@ -111,6 +111,7 @@ def list_jobs(
     *,
     status: str | None = None,
     search: str | None = None,
+    sort: str = "newest",
     limit: int = 50,
     offset: int = 0,
 ) -> tuple[list[dict[str, Any]], int]:
@@ -123,12 +124,13 @@ def list_jobs(
         where.append("(title LIKE ? OR company LIKE ?)")
         args += [f"%{search}%", f"%{search}%"]
     clause = " AND ".join(where)
+    order = "rank_score DESC NULLS LAST, id DESC" if sort == "score" else "id DESC"
     total = conn.execute(f"SELECT COUNT(*) FROM jobs WHERE {clause}", args).fetchone()[0]
     rows = conn.execute(
         f"""SELECT id, source, url, title, company, location, posted_at, status,
                    status_reason, duplicate_of, first_seen_at, last_seen_at,
-                   length(description) AS description_chars
-            FROM jobs WHERE {clause} ORDER BY id DESC LIMIT ? OFFSET ?""",
+                   length(description) AS description_chars, rank_score
+            FROM jobs WHERE {clause} ORDER BY {order} LIMIT ? OFFSET ?""",
         [*args, limit, offset],
     ).fetchall()
     return [dict(r) for r in rows], total
@@ -138,8 +140,10 @@ def get_job(conn: sqlite3.Connection, profile: str, job_id: int) -> dict[str, An
     job = row_to_dict(
         conn.execute("SELECT * FROM jobs WHERE profile = ? AND id = ?", (profile, job_id)).fetchone()
     )
-    if job and job.get("filter_result"):
-        job["filter_result"] = json.loads(job["filter_result"])
+    if job:
+        for column in ("filter_result", "rank_result"):
+            if job.get(column):
+                job[column] = json.loads(job[column])
     return job
 
 

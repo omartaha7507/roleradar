@@ -1,4 +1,5 @@
-"""Where RoleRadar keeps its files, and which address the server listens on.
+"""Where RoleRadar keeps its files, which address the server listens on, and
+which AI models it uses.
 
 Everything can be overridden with environment variables, which is how the
 tests point the app at a throwaway folder instead of your real data.
@@ -21,15 +22,36 @@ class Settings:
     host: str = "127.0.0.1"
     port: int = 8787
 
+    # Stage 3: the local model that ranks jobs (runs in the Ollama app).
+    ollama_url: str = "http://127.0.0.1:11434"
+    ollama_model: str = "llama3.1:8b"
+    ollama_timeout: int = 300  # seconds per job; a laptop CPU can be slow
+
+    # Stage 5: Claude Code writes the CVs and cover letters.
+    claude_command: str = "claude"
+    claude_model: str = "sonnet"
+    claude_timeout: int = 600  # seconds per job
+
     @property
     def db_path(self) -> Path:
         return self.data_dir / "roleradar.db"
 
+    @property
+    def applications_dir(self) -> Path:
+        return self.data_dir / "applications"
+
 
 def load_settings() -> Settings:
+    env = os.environ.get
     return Settings(
-        data_dir=Path(os.environ.get("ROLERADAR_DATA_DIR", PROJECT_ROOT / "data")),
-        profiles_dir=Path(os.environ.get("ROLERADAR_PROFILES_DIR", PROJECT_ROOT / "profiles")),
-        host=os.environ.get("ROLERADAR_HOST", "127.0.0.1"),
-        port=int(os.environ.get("ROLERADAR_PORT", "8787")),
+        data_dir=Path(env("ROLERADAR_DATA_DIR", PROJECT_ROOT / "data")),
+        profiles_dir=Path(env("ROLERADAR_PROFILES_DIR", PROJECT_ROOT / "profiles")),
+        host=env("ROLERADAR_HOST", "127.0.0.1"),
+        port=int(env("ROLERADAR_PORT", "8787")),
+        ollama_url=env("ROLERADAR_OLLAMA_URL", "http://127.0.0.1:11434"),
+        ollama_model=env("ROLERADAR_OLLAMA_MODEL", "llama3.1:8b"),
+        ollama_timeout=int(env("ROLERADAR_OLLAMA_TIMEOUT", "300")),
+        claude_command=env("ROLERADAR_CLAUDE_COMMAND", "claude"),
+        claude_model=env("ROLERADAR_CLAUDE_MODEL", "sonnet"),
+        claude_timeout=int(env("ROLERADAR_CLAUDE_TIMEOUT", "600")),
     )

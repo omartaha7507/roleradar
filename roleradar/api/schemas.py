@@ -90,6 +90,7 @@ class JobSummary(BaseModel):
     first_seen_at: str
     last_seen_at: str
     description_chars: int | None
+    rank_score: int | None = None
 
 
 class JobDetail(JobSummary):
@@ -98,6 +99,8 @@ class JobDetail(JobSummary):
     updated_at: str
     filter_result: FilterResultOut | None
     filtered_at: str | None
+    rank_result: dict | None = None
+    ranked_at: str | None = None
 
 
 class JobPage(BaseModel):
@@ -196,3 +199,13 @@ class Health(BaseModel):
     version: str
     schema_version: int
     profiles: int
+
+
+class Started(BaseModel):
+    run_id: int | None
+    total: int
+    message: str
+
+
+class Stopped(BaseModel):
+    stopping: bool
