@@ -12,8 +12,9 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, RedirectResponse
 
-from roleradar import __version__
+from roleradar import __version__, livecheck
 from roleradar.api import routes_jobs, routes_pipeline, routes_scrape, routes_searches, routes_system
+from roleradar.builder import claude_runner
 from roleradar.db import connect, log_event, migrate
 from roleradar.ollama import OllamaClient
 from roleradar.profiles import ProfileError, ProfileNotFound
@@ -50,6 +51,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.workers = Workers()
     # Tests replace these factories with fakes, so no real AI is needed to test.
     app.state.make_ollama = lambda: OllamaClient(settings.ollama_url, settings.ollama_timeout)
+    app.state.make_claude = lambda: claude_runner(settings)
+    app.state.live_check = livecheck.check
 
     @app.exception_handler(ProfileNotFound)
     async def _profile_not_found(_: Request, exc: ProfileNotFound) -> JSONResponse:

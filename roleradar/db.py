@@ -133,6 +133,23 @@ MIGRATIONS: list[str] = [
         updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
     );
     """,
+    # --- version 5: stage 5, CV and cover-letter builder ----------------------------------------
+    """
+    CREATE TABLE builds (
+        id           INTEGER PRIMARY KEY,
+        profile      TEXT    NOT NULL,
+        job_id       INTEGER NOT NULL REFERENCES jobs (id) ON DELETE CASCADE,
+        folder       TEXT    NOT NULL,
+        cv_pdf       TEXT,             -- file names inside the folder; NULL when no PDF could be made
+        letter_pdf   TEXT,
+        language     TEXT    NOT NULL,
+        fit_summary  TEXT,
+        flags        TEXT,             -- JSON list: gaps worth knowing before applying
+        model        TEXT,
+        created_at   TEXT    NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX builds_by_job ON builds (profile, job_id);
+    """,
 ]
 
 
