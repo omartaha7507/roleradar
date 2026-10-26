@@ -8,8 +8,10 @@ def test_health(client):
     assert body["status"] == "ok" and body["profiles"] == 1 and body["schema_version"] >= 1
 
 
-def test_root_redirects_to_docs(client):
-    assert client.get("/", follow_redirects=False).headers["location"] == "/docs"
+def test_dashboard_is_served(client):
+    page = client.get("/")
+    assert page.status_code == 200 and "<title>RoleRadar</title>" in page.text
+    assert client.get("/static/app.js").status_code == 200
 
 
 def test_profiles_list_and_detail(client):
@@ -121,3 +123,14 @@ def test_ingest_filters_and_rerun_endpoint(client):
     rerun = client.post("/api/profiles/alex/filter", params={"rerun": True}).json()
     assert (rerun["checked"], rerun["passed"], rerun["dropped"]) == (2, 1, 1)
     assert rerun["reasons"] == {"seniority": 1}
+
+
+def test_many_requests_at_once(client):
+    """The dashboard fires several requests together; none may fail."""
+    from concurrent.futures import ThreadPoolExecutor
+
+    paths = ["/api/profiles/alex/summary", "/api/profiles/alex/events", "/api/profiles/alex/searches",
+             "/api/profiles/alex/jobs", "/api/health"] * 8
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        codes = list(pool.map(lambda p: client.get(p).status_code, paths))
+    assert codes == [200] * len(paths)

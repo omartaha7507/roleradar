@@ -8,9 +8,11 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from roleradar import __version__, livecheck
 from roleradar.api import routes_jobs, routes_pipeline, routes_scrape, routes_searches, routes_system
@@ -22,6 +24,9 @@ from roleradar.runs import mark_interrupted
 from roleradar.scraping import mark_interrupted_requests
 from roleradar.settings import Settings, load_settings
 from roleradar.workers import Workers
+
+
+STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -62,9 +67,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     async def _profile_invalid(_: Request, exc: ProfileError) -> JSONResponse:
         return JSONResponse({"detail": str(exc)}, status_code=422)
 
+    # The dashboard: plain HTML, CSS and JavaScript files served by the same server.
+    app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
     @app.get("/", include_in_schema=False)
-    def root() -> RedirectResponse:
-        return RedirectResponse("/docs")
+    def dashboard() -> FileResponse:
+        return FileResponse(STATIC_DIR / "index.html")
 
     app.include_router(routes_system.router)
     app.include_router(routes_jobs.router)

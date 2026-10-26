@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from typing import Annotated, Literal
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
 
 from roleradar import store
-from roleradar.api.deps import Conn, CurrentProfile
+from roleradar.api.deps import Conn, CurrentProfile, SettingsDep
 from roleradar.api.schemas import (
     EventOut,
     FilterResultOut,
@@ -20,6 +20,7 @@ from roleradar.api.schemas import (
     JobStatus,
     Summary,
 )
+from roleradar.checks import run_checks
 from roleradar.filtering import run_filter
 from roleradar.rules import JobText, evaluate
 
@@ -79,15 +80,32 @@ def job(job_id: int, profile: CurrentProfile, conn: Conn) -> dict:
 
 
 @router.get("/summary", response_model=Summary, summary="Counts for the dashboard")
-def summary(profile: CurrentProfile, conn: Conn) -> dict:
+def summary(request: Request, profile: CurrentProfile, conn: Conn) -> dict:
     searches = store.list_searches(conn, profile.name)
+    workers = request.app.state.workers
+    scrape = conn.execute(
+        "SELECT status FROM scrape_requests WHERE profile = ? AND status IN ('waiting', 'running')",
+        (profile.name,),
+    ).fetchone()
     return {
         "profile": profile.name,
         "jobs": store.status_counts(conn, profile.name),
         "searches_enabled": sum(s["enabled"] for s in searches),
         "searches_total": len(searches),
         "latest_runs": store.latest_runs(conn, profile.name),
+        "active": {
+            "scrape": scrape["status"] if scrape else None,
+            "rank": workers.is_running(profile.name, "rank"),
+            "build": workers.is_running(profile.name, "build"),
+        },
     }
+
+
+@router.get("/checks", summary="Setup checklist")
+def checks(request: Request, profile: CurrentProfile, conn: Conn, settings: SettingsDep) -> list[dict]:
+    client = request.app.state.make_ollama()
+    client.timeout = 5
+    return run_checks(conn, settings, profile.name, client)
 
 
 @router.get("/events", response_model=list[EventOut], summary="Activity log, newest first")

@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RoleRadar</title>
+  <link rel="icon" href="/static/icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><img src="/static/icon.png" alt="" width="26" height="26"><span>RoleRadar</span></div>
+    <label class="profile-pick">
+      <span>Profile</span>
+      <select id="profile" aria-label="Profile"></select>
+    </label>
+    <button class="setup-pill" id="setupPill" type="button" aria-controls="setup">Checking setup…</button>
+  </header>
+
+  <section id="setup" class="setup" hidden>
+    <h2>Setup</h2>
+    <ul id="checks"></ul>
+  </section>
+
+  <section class="pipeline" aria-label="Pipeline">
+    <div class="sweep" id="sweep" aria-hidden="true"></div>
+    <div class="stage" data-step="scrape">
+      <div class="count" id="countCollected">0</div>
+      <div class="stage-name">Collected</div>
+      <div class="stage-actions">
+        <select id="scrapeStage" aria-label="Which searches">
+          <option value="">All searches</option>
+          <option value="1">Stage 1 searches</option>
+          <option value="2">Stage 2 searches</option>
+          <option value="3">Stage 3 searches</option>
+        </select>
+        <button class="primary" id="scrapeBtn" type="button">Scrape LinkedIn</button>
+        <button class="quiet" id="scrapeCancel" type="button" hidden>Cancel</button>
+      </div>
+      <div class="run" id="runScrape"></div>
+    </div>
+    <div class="stage" data-step="filter">
+      <div class="count" id="countWaiting">0</div>
+      <div class="stage-name">Waiting for AI</div>
+      <div class="stage-actions">
+        <span class="hint">Rules check every new job automatically.</span>
+        <button class="quiet" id="refilterBtn" type="button">Re-check with my current profile</button>
+      </div>
+      <div class="run" id="runFilter"></div>
+    </div>
+    <div class="stage" data-step="rank">
+      <div class="count" id="countRanked">0</div>
+      <div class="stage-name">Ranked</div>
+      <div class="stage-actions">
+        <button class="primary" id="rankBtn" type="button">Rank waiting jobs</button>
+        <button class="quiet" id="rankStop" type="button" hidden>Stop</button>
+      </div>
+      <div class="run" id="runRank"></div>
+    </div>
+    <div class="stage" data-step="build">
+      <div class="count" id="countWritten">0</div>
+      <div class="stage-name">Written</div>
+      <div class="stage-actions">
+        <label class="inline">Best <input id="buildCount" type="number" min="1" max="30" value="5" aria-label="How many"></label>
+        <button class="primary" id="buildBtn" type="button">Write applications</button>
+        <button class="quiet" id="buildStop" type="button" hidden>Stop</button>
+      </div>
+      <div class="run" id="runBuild"></div>
+    </div>
+    <div class="stage last">
+      <div class="count" id="countApplied">0</div>
+      <div class="stage-name">Applied</div>
+      <div class="stage-actions"><span class="hint">You apply; tick it here.</span></div>
+    </div>
+  </section>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <main class="layout">
+    <section class="jobs">
+      <nav class="tabs" role="tablist" id="tabs">
+        <button role="tab" data-tab="review" aria-selected="true">To review <span></span></button>
+        <button role="tab" data-tab="ranked">Ranked <span></span></button>
+        <button role="tab" data-tab="waiting">Waiting <span></span></button>
+        <button role="tab" data-tab="dropped">Dropped <span></span></button>
+        <button role="tab" data-tab="applied">Applied <span></span></button>
+        <button role="tab" data-tab="archive">Skipped and closed <span></span></button>
+      </nav>
+      <div class="list-tools" id="listTools">
+        <input id="search" type="search" placeholder="Search title or company" aria-label="Search jobs">
+        <button class="primary" id="buildSelected" type="button" hidden>Write applications for selected</button>
+      </div>
+      <div id="list" class="list"></div>
+    </section>
+
+    <aside class="side">
+      <section class="panel">
+        <h2>Saved searches</h2>
+        <ul id="searches" class="searches"></ul>
+        <form id="searchForm" class="search-form">
+          <input name="label" placeholder="Name, e.g. AI Engineer Berlin" required maxlength="80" aria-label="Search name">
+          <input name="url" placeholder="Paste a LinkedIn job search URL" required aria-label="Search URL">
+          <button type="submit">Save search</button>
+        </form>
+        <p class="hint">Easier: open a LinkedIn search in Chrome and use the RoleRadar icon.</p>
+      </section>
+      <section class="panel">
+        <h2>Activity</h2>
+        <ol id="events" class="events"></ol>
+      </section>
+    </aside>
+  </main>
+
+  <dialog id="detail">
+    <form method="dialog"><button class="close" aria-label="Close">Close</button></form>
+    <div id="detailBody"></div>
+  </dialog>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

@@ -129,7 +129,9 @@ def list_jobs(
     rows = conn.execute(
         f"""SELECT id, source, url, title, company, location, posted_at, status,
                    status_reason, duplicate_of, first_seen_at, last_seen_at,
-                   length(description) AS description_chars, rank_score
+                   length(description) AS description_chars, rank_score,
+                   json_extract(rank_result, '$.judgement.reason') AS rank_reason,
+                   json_extract(filter_result, '$.reasons[0].evidence') AS evidence
             FROM jobs WHERE {clause} ORDER BY {order} LIMIT ? OFFSET ?""",
         [*args, limit, offset],
     ).fetchall()

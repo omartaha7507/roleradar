@@ -260,7 +260,7 @@ def run_rank(settings: Settings, profile_name: str, stop: threading.Event, *,
             counts["cached"] += from_cache
         progress(conn, run_id, len(jobs))
         message = (f"Ranked {len(jobs)} jobs with {model}: {counts['ranked']} kept, "
-                   f"{counts['dropped']} weak fits dropped"
+                   f"{counts['dropped']} weak fit{'s' if counts['dropped'] != 1 else ''} dropped"
                    + (f", {counts['failed']} failed (still waiting)" if counts["failed"] else "")
                    + (f", {counts['cached']} from cache" if counts["cached"] else ""))
         finish(conn, run_id, "done", message, profile=profile_name, kind="rank", data=counts)

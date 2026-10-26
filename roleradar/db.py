@@ -155,7 +155,11 @@ MIGRATIONS: list[str] = [
 
 def connect(db_path: Path) -> sqlite3.Connection:
     db_path.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(db_path, timeout=10, isolation_level=None)  # autocommit; see transaction()
+    # check_same_thread=False: FastAPI may open a request's connection on one worker
+    # thread and use it on another. That is safe here because each connection still
+    # belongs to exactly one request (or one background task) at a time.
+    conn = sqlite3.connect(db_path, timeout=10, isolation_level=None,  # autocommit; see transaction()
+                           check_same_thread=False)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
     # WAL lets the dashboard read while the ranker writes, without blocking each other.

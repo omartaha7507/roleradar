@@ -91,6 +91,8 @@ class JobSummary(BaseModel):
     last_seen_at: str
     description_chars: int | None
     rank_score: int | None = None
+    rank_reason: str | None = None
+    evidence: str | None = Field(default=None, description="The ad sentence behind a filter drop")
 
 
 class JobDetail(JobSummary):
@@ -176,12 +178,19 @@ class RunOut(BaseModel):
     finished_at: str | None
 
 
+class Active(BaseModel):
+    scrape: str | None = Field(description="'waiting' or 'running' when a scrape is in progress")
+    rank: bool
+    build: bool
+
+
 class Summary(BaseModel):
     profile: str
     jobs: dict[str, int]
     searches_enabled: int
     searches_total: int
     latest_runs: dict[str, RunOut]
+    active: Active
 
 
 class EventOut(BaseModel):

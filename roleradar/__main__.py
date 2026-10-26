@@ -10,13 +10,13 @@ from roleradar.settings import load_settings
 
 
 def port_is_free(host: str, port: int) -> bool:
-    """Try to take the port for a moment. If another program holds it, this fails."""
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-        try:
-            sock.bind((host, port))
-        except OSError:
-            return False
-    return True
+    """Is anything answering on this port? Knocking is more reliable than trying to
+    take the port: a port closed seconds ago can't be taken yet, but nobody answers."""
+    try:
+        with socket.create_connection((host, port), timeout=0.5):
+            return False  # someone answered: the port is in use
+    except OSError:
+        return True
 
 
 def main() -> None:
