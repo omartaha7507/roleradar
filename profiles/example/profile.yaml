@@ -1,0 +1,47 @@
+# RoleRadar profile: the rules that decide which jobs are worth a CV.
+# Copy this whole folder to profiles/<your-name>/ and edit it.
+# Your own folder is gitignored, so it never reaches GitHub.
+
+display_name: Alex Example
+
+# Your level per language (A1 A2 B1 B2 C1 C2 native).
+# A job that asks for more than this in any language is dropped.
+languages:
+  English: C1
+  German: B1
+
+experience:
+  years: 1            # your real professional experience
+  drop_at_years: 3    # drop jobs that ask for this many years or more
+
+roles:
+  # What you are looking for. Used for title matching and ranking.
+  target:
+    - AI Engineer
+    - Machine Learning Engineer
+    - Python Developer
+    - Data Scientist
+  # Jobs in these areas are never worth a CV, however well they score.
+  out_of_lane:
+    - Sales
+    - Recruiter
+    - Customer Success
+  # Titles that usually mean "too senior". A job is only dropped for these
+  # when its description does not say it is open to juniors.
+  seniority_words: [Staff, Principal, Lead, Head of, Director, Architect]
+
+locations:
+  # Checked top to bottom; the first tier that matches the job's location wins.
+  priority:
+    - label: Home city
+      match: [Berlin]
+      bonus: 12
+    - label: Rest of Germany
+      match: [Germany, Deutschland]
+      bonus: 4
+  remote_ok: true
+  exclude: []         # e.g. [United States] if you cannot work there
+
+scoring:
+  min_fit: 45         # fit score (0-100) a job needs to pass
+  strong_score: 95    # final score counted as a strong match

@@ -1,0 +1,29 @@
+# --- Personal data: never committed ---------------------------------------
+# Every real profile stays on your own machine. Only the example is public.
+profiles/*
+!profiles/example/
+!profiles/README.md
+
+# Database, logs, generated CVs
+data/
+applications/
+*.db
+*.db-wal
+*.db-shm
+*.log
+
+# --- Python -------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+*.egg-info/
+build/
+dist/
+
+# --- Editors / OS ---------------------------------------------------------------
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
