@@ -13,11 +13,12 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, RedirectResponse
 
 from roleradar import __version__
-from roleradar.api import routes_jobs, routes_pipeline, routes_searches, routes_system
+from roleradar.api import routes_jobs, routes_pipeline, routes_scrape, routes_searches, routes_system
 from roleradar.db import connect, log_event, migrate
 from roleradar.ollama import OllamaClient
 from roleradar.profiles import ProfileError, ProfileNotFound
 from roleradar.runs import mark_interrupted
+from roleradar.scraping import mark_interrupted_requests
 from roleradar.settings import Settings, load_settings
 from roleradar.workers import Workers
 
@@ -33,6 +34,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         try:
             version = migrate(conn)
             mark_interrupted(conn)
+            mark_interrupted_requests(conn)
             log_event(conn, "server", f"Server started (database version {version})")
         finally:
             conn.close()
@@ -65,4 +67,5 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(routes_jobs.router)
     app.include_router(routes_searches.router)
     app.include_router(routes_pipeline.router)
+    app.include_router(routes_scrape.router)
     return app

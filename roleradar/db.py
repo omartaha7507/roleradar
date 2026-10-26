@@ -110,6 +110,29 @@ MIGRATIONS: list[str] = [
         created_at  TEXT NOT NULL DEFAULT (datetime('now'))
     );
     """,
+    # --- version 4: stage 4, Chrome extension ------------------------------------------------
+    """
+    -- "Please scrape" requests. The dashboard creates them; the extension,
+    -- which checks in every minute, picks them up.
+    CREATE TABLE scrape_requests (
+        id           INTEGER PRIMARY KEY,
+        profile      TEXT NOT NULL,
+        stage        INTEGER,                    -- only searches of this stage; NULL = all
+        status       TEXT NOT NULL DEFAULT 'waiting' CHECK (status IN
+                       ('waiting', 'running', 'done', 'failed', 'cancelled')),
+        run_id       INTEGER REFERENCES runs (id),
+        created_at   TEXT NOT NULL DEFAULT (datetime('now')),
+        claimed_at   TEXT,
+        finished_at  TEXT
+    );
+
+    -- Small facts the app remembers, e.g. when the extension last checked in.
+    CREATE TABLE kv (
+        key         TEXT PRIMARY KEY,
+        value       TEXT NOT NULL,
+        updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    """,
 ]
 
 

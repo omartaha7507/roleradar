@@ -141,10 +141,52 @@ def get_job(conn: sqlite3.Connection, profile: str, job_id: int) -> dict[str, An
         conn.execute("SELECT * FROM jobs WHERE profile = ? AND id = ?", (profile, job_id)).fetchone()
     )
     if job:
+        job["description_chars"] = len(job["description"] or "")
         for column in ("filter_result", "rank_result"):
             if job.get(column):
                 job[column] = json.loads(job[column])
     return job
+
+
+USER_STATUSES = ("applied", "skipped", "ranked", "built")
+
+
+def set_status(conn: sqlite3.Connection, profile: str, job_id: int, status: str) -> dict[str, Any] | None:
+    """You decide: applied, skipped, or back to ranked/built (undo)."""
+    if status not in USER_STATUSES:
+        raise ValueError(status)
+    with transaction(conn):
+        updated = conn.execute(
+            "UPDATE jobs SET status = ?, status_reason = NULL, updated_at = datetime('now') "
+            "WHERE profile = ? AND id = ?",
+            (status, profile, job_id),
+        ).rowcount
+        if updated:
+            log_event(conn, "status", f"Job #{job_id} marked {status}", profile=profile)
+    return get_job(conn, profile, job_id) if updated else None
+
+
+def mark_applied_by_url(conn: sqlite3.Connection, profile: str, url: str, title: str | None,
+                        company: str | None) -> dict[str, Any]:
+    """From the extension: 'I applied to the job on this page'.
+
+    If RoleRadar knows the job, it is marked applied. If not (you found it
+    yourself), it is added as applied, so a later re-post is recognised.
+    """
+    key = url_key(url)
+    row = conn.execute("SELECT id FROM jobs WHERE profile = ? AND url_key = ?", (profile, key)).fetchone()
+    if row:
+        return set_status(conn, profile, row["id"], "applied")  # type: ignore[return-value]
+    if not (title and company):
+        raise ValueError("This job is not in RoleRadar yet; title and company are needed to add it")
+    with transaction(conn):
+        job_id = conn.execute(
+            "INSERT INTO jobs (profile, source, url, url_key, role_key, title, company, status) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, 'applied')",
+            (profile, site_of(url), url, key, role_key(company, title), title, company),
+        ).lastrowid
+        log_event(conn, "status", f"Applied (added by hand): {title} at {company}", profile=profile)
+    return get_job(conn, profile, job_id)  # type: ignore[return-value]
 
 
 def status_counts(conn: sqlite3.Connection, profile: str) -> dict[str, int]:

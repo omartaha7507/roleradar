@@ -75,7 +75,6 @@ def job(job_id: int, profile: CurrentProfile, conn: Conn) -> dict:
     found = store.get_job(conn, profile.name, job_id)
     if not found:
         raise HTTPException(404, "Job not found")
-    found["description_chars"] = len(found["description"] or "")
     return found
 
 
