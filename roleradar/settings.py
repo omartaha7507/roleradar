@@ -41,8 +41,28 @@ class Settings:
         return self.data_dir / "applications"
 
 
+SETTINGS_FILE = PROJECT_ROOT / "settings.env"
+
+
+def read_settings_file(path: Path = SETTINGS_FILE) -> dict[str, str]:
+    """settings.env: one KEY=value per line, # for comments. Easier than environment
+    variables on Windows. Real environment variables still win over the file."""
+    values: dict[str, str] = {}
+    if path.exists():
+        for line in path.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if line and not line.startswith("#") and "=" in line:
+                key, value = line.split("=", 1)
+                values[key.strip()] = value.strip().strip('"').strip("'")
+    return values
+
+
 def load_settings() -> Settings:
-    env = os.environ.get
+    from_file = read_settings_file()
+
+    def env(key: str, default: object) -> str:
+        return os.environ.get(key, from_file.get(key, str(default)))
+
     return Settings(
         data_dir=Path(env("ROLERADAR_DATA_DIR", PROJECT_ROOT / "data")),
         profiles_dir=Path(env("ROLERADAR_PROFILES_DIR", PROJECT_ROOT / "profiles")),

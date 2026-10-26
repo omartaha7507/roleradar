@@ -15,7 +15,9 @@ from pathlib import Path
 
 
 def find_browser() -> str | None:
-    override = os.environ.get("ROLERADAR_CHROME")
+    from roleradar.settings import read_settings_file
+
+    override = os.environ.get("ROLERADAR_CHROME") or read_settings_file().get("ROLERADAR_CHROME")
     if override:
         return override if Path(override).exists() else None
     candidates = [
@@ -27,7 +29,7 @@ def find_browser() -> str | None:
         Path("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"),
     ]
     for path in candidates:
-        if str(path).strip() and path.is_file():
+        if path.is_absolute() and path.is_file():  # skips paths built from an empty variable
             return str(path)
     for name in ("google-chrome", "chromium", "chromium-browser", "microsoft-edge"):
         found = shutil.which(name)

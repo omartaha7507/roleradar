@@ -1,4 +1,4 @@
-# Stage 2: The rule filter
+# The rule filter in detail
 
 **In one sentence:** before any AI reads a job, simple rules throw out the
 obvious rejects ("5+ years", "German C1", "Head of Data"), each with the
@@ -150,7 +150,7 @@ against your profile without saving anything.
 
 1. Start RoleRadar and open <http://127.0.0.1:8787/docs>.
 2. Open **POST /api/profiles/{name}/filter/test** → **Try it out**.
-3. Name: `example`. Body: a real LinkedIn ad you're unsure about:
+3. Name: your profile name. Body: a real LinkedIn ad you're unsure about:
    ```json
    {
      "title": "the job title",
