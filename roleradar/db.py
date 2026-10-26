@@ -90,6 +90,11 @@ MIGRATIONS: list[str] = [
     );
     CREATE INDEX events_by_profile ON events (profile, id);
     """,
+    # --- version 2: stage 2, rule filter ----------------------------------------------
+    """
+    ALTER TABLE jobs ADD COLUMN filter_result TEXT;   -- JSON: decision, reasons, notes
+    ALTER TABLE jobs ADD COLUMN filtered_at   TEXT;
+    """,
 ]
 
 

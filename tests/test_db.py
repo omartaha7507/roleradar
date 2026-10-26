@@ -59,3 +59,16 @@ def test_failed_batch_writes_nothing(conn):
     except KeyError:
         pass
     assert store.list_jobs(conn, "alex")[1] == 0
+
+
+def test_stage1_database_upgrades_without_losing_jobs(tmp_path):
+    from roleradar.db import connect
+
+    conn = connect(tmp_path / "old.db")
+    conn.executescript(f"BEGIN;\n{MIGRATIONS[0]}\nPRAGMA user_version = 1;\nCOMMIT;")  # a stage 1 database
+    store.ingest_jobs(conn, "alex", "linkedin", [make_job(1)])
+
+    assert migrate(conn) == len(MIGRATIONS)
+    job = store.list_jobs(conn, "alex")[0][0]
+    assert job["status"] == "new"  # still there, waiting for the filter
+    conn.close()

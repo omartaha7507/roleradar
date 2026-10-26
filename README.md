@@ -27,7 +27,7 @@ flowchart LR
 | Stage | Part | Status |
 | --- | --- | --- |
 | 1 | Profiles, database, FastAPI server | Done |
-| 2 | Rule pre-filter (years, languages, seniority) | Planned |
+| 2 | Rule pre-filter (years, languages, seniority) | Done |
 | 3 | Local LLM ranker (Ollama) | Planned |
 | 4 | Chrome extension (LinkedIn) | Planned |
 | 5 | Live check and CV / cover-letter builder | Planned |
@@ -64,8 +64,10 @@ pytest
 roleradar/
   api/          FastAPI app, request/response schemas, routes
   db.py         SQLite connection and migrations
+  filtering.py  runs the rule filter over stored jobs, with progress
   keys.py       duplicate and re-post detection
   profiles.py   profile loading and validation
+  rules.py      the rule filter: years, languages, seniority, lane, location
   searches.py   advice on saved search URLs
   store.py      reading and writing jobs, searches, events
 profiles/

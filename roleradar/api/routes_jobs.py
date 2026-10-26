@@ -10,6 +10,9 @@ from roleradar import store
 from roleradar.api.deps import Conn, CurrentProfile
 from roleradar.api.schemas import (
     EventOut,
+    FilterResultOut,
+    FilterRunOut,
+    FilterTestIn,
     IngestRequest,
     IngestResponse,
     JobDetail,
@@ -17,6 +20,8 @@ from roleradar.api.schemas import (
     JobStatus,
     Summary,
 )
+from roleradar.filtering import run_filter
+from roleradar.rules import JobText, evaluate
 
 router = APIRouter(prefix="/api/profiles/{name}", tags=["jobs"])
 
@@ -29,7 +34,26 @@ def ingest(body: IngestRequest, profile: CurrentProfile, conn: Conn) -> dict:
         conn, profile.name, body.source,
         (job.model_dump() for job in body.jobs), search_id=body.search_id,
     )
-    return result.__dict__
+    # New jobs go through the rule filter straight away; it takes milliseconds.
+    filtered = run_filter(conn, profile)
+    return {**result.__dict__, "passed": filtered.passed, "dropped": filtered.dropped}
+
+
+@router.post("/filter", response_model=FilterRunOut, summary="Run the rule filter")
+def filter_jobs(
+    profile: CurrentProfile,
+    conn: Conn,
+    rerun: Annotated[bool, Query(description="Also re-check jobs filtered before, "
+                                             "e.g. after you changed profile.yaml")] = False,
+) -> dict:
+    return run_filter(conn, profile, rerun=rerun).__dict__
+
+
+@router.post("/filter/test", response_model=FilterResultOut,
+             summary="Try the filter on one job without saving it")
+def filter_test(body: FilterTestIn, profile: CurrentProfile) -> dict:
+    job = JobText(body.title, body.company, body.location, body.description)
+    return evaluate(job, profile.config).to_dict()
 
 
 @router.get("/jobs", response_model=JobPage, summary="List jobs, newest first")

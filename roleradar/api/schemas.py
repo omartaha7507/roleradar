@@ -45,6 +45,35 @@ class IngestResponse(BaseModel):
     inserted: int
     updated: int
     reposts: int
+    passed: int = Field(description="New jobs that passed the rule filter")
+    dropped: int = Field(description="New jobs the rule filter dropped")
+
+
+class FindingOut(BaseModel):
+    rule: str
+    message: str
+    evidence: str
+
+
+class FilterResultOut(BaseModel):
+    decision: Literal["pass", "drop"]
+    reasons: list[FindingOut]
+    notes: list[FindingOut]
+
+
+class FilterRunOut(BaseModel):
+    run_id: int
+    checked: int
+    passed: int
+    dropped: int
+    reasons: dict[str, int] = Field(description="How many dropped jobs each rule caught")
+
+
+class FilterTestIn(BaseModel):
+    title: str = Field(min_length=1, max_length=300)
+    company: str = Field(default="", max_length=200)
+    location: str | None = Field(default=None, max_length=200)
+    description: str | None = Field(default=None, max_length=100_000)
 
 
 class JobSummary(BaseModel):
@@ -67,6 +96,8 @@ class JobDetail(JobSummary):
     description: str | None
     search_id: int | None
     updated_at: str
+    filter_result: FilterResultOut | None
+    filtered_at: str | None
 
 
 class JobPage(BaseModel):

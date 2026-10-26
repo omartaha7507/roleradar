@@ -135,9 +135,12 @@ def list_jobs(
 
 
 def get_job(conn: sqlite3.Connection, profile: str, job_id: int) -> dict[str, Any] | None:
-    return row_to_dict(
+    job = row_to_dict(
         conn.execute("SELECT * FROM jobs WHERE profile = ? AND id = ?", (profile, job_id)).fetchone()
     )
+    if job and job.get("filter_result"):
+        job["filter_result"] = json.loads(job["filter_result"])
+    return job
 
 
 def status_counts(conn: sqlite3.Connection, profile: str) -> dict[str, int]:

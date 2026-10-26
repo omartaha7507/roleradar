@@ -37,14 +37,15 @@ def test_broken_profile_is_listed_with_its_error(client, settings):
 
 def test_ingest_list_and_detail(client):
     response = client.post("/api/profiles/alex/jobs", json={"source": "linkedin", "jobs": [make_job(1), make_job(2)]})
-    assert response.json() == {"inserted": 2, "updated": 0, "reposts": 0}
+    assert response.json() == {"inserted": 2, "updated": 0, "reposts": 0, "passed": 2, "dropped": 0}
 
-    page = client.get("/api/profiles/alex/jobs", params={"status": "new"}).json()
+    page = client.get("/api/profiles/alex/jobs", params={"status": "passed"}).json()
     assert page["total"] == 2 and page["items"][0]["title"] == "Junior AI Engineer 2"
 
     job_id = page["items"][0]["id"]
     detail = client.get(f"/api/profiles/alex/jobs/{job_id}").json()
     assert detail["description"] == "We build things with Python."
+    assert detail["filter_result"]["decision"] == "pass"
     assert client.get("/api/profiles/alex/jobs/9999").status_code == 404
 
 
@@ -90,11 +91,33 @@ def test_summary_and_events(client):
     client.post("/api/profiles/alex/searches", json={"label": "AI Berlin", "url": SEARCH})
     client.post("/api/profiles/alex/jobs", json={"source": "linkedin", "jobs": [make_job(1)]})
     summary = client.get("/api/profiles/alex/summary").json()
-    assert summary["jobs"]["new"] == 1 and summary["searches_enabled"] == 1
+    assert summary["jobs"]["passed"] == 1 and summary["searches_enabled"] == 1
+    assert summary["latest_runs"]["filter"]["status"] == "done"
     kinds = [e["kind"] for e in client.get("/api/profiles/alex/events").json()]
-    assert kinds[:2] == ["ingest", "search"] and "server" in kinds
+    assert kinds[:3] == ["filter", "ingest", "search"] and "server" in kinds
 
 
 def test_docs_page_exists(client):
     assert client.get("/docs").status_code == 200
     assert "/api/profiles/{name}/jobs" in client.get("/openapi.json").json()["paths"]
+
+
+def test_filter_test_endpoint_saves_nothing(client):
+    body = {"title": "Head of AI", "description": "Fluent German (C1) required. 8+ years of experience."}
+    result = client.post("/api/profiles/alex/filter/test", json=body).json()
+    assert result["decision"] == "drop"
+    assert {r["rule"] for r in result["reasons"]} == {"years", "language", "seniority"}
+    assert client.get("/api/profiles/alex/jobs").json()["total"] == 0
+
+
+def test_ingest_filters_and_rerun_endpoint(client):
+    senior = make_job(2, title="Staff ML Engineer", description="Own the platform.")
+    body = client.post("/api/profiles/alex/jobs", json={"source": "linkedin", "jobs": [make_job(1), senior]}).json()
+    assert (body["passed"], body["dropped"]) == (1, 1)
+
+    dropped = client.get("/api/profiles/alex/jobs", params={"status": "dropped"}).json()["items"][0]
+    assert dropped["status_reason"].startswith("'Staff' in the title")
+
+    rerun = client.post("/api/profiles/alex/filter", params={"rerun": True}).json()
+    assert (rerun["checked"], rerun["passed"], rerun["dropped"]) == (2, 1, 1)
+    assert rerun["reasons"] == {"seniority": 1}
